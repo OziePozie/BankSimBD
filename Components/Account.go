@@ -6,6 +6,7 @@ import (
 )
 
 type Account struct {
+	ID         int    `json:"ID"`
 	FirstName  string `json:"first_name"`
 	SecondName string `json:"second_name"`
 	Login      string `json:"login"`
@@ -21,4 +22,30 @@ func (a Account) CreateAccount() {
 
 	fmt.Println(res.RowsAffected())
 
+}
+
+func (a Account) ReadAccount() Account {
+	var acc Account
+	connectToDB := db.ConnectToDB()
+	query := "SELECT * FROM accounts WHERE email = $1"
+	stmt, _ := connectToDB.Prepare(query)
+
+	stmt.QueryRow(a.Login).Scan(&a.ID, &a.FirstName, &a.SecondName, &a.Login, &a.Password)
+
+	return acc
+}
+
+func (a Account) UpdateAccount() {
+	connectToDB := db.ConnectToDB()
+	query := "UPDATE accounts SET first_name = $2, second_name = $3, password = $4 WHERE email = $1;"
+	stmt, _ := connectToDB.Prepare(query)
+	stmt.Exec(a.Login, a.FirstName, a.SecondName, a.Password)
+
+}
+
+func (a Account) DeleteAccount(id int) {
+	connectToDB := db.ConnectToDB()
+	query := "DELETE FROM accounts WHERE account_id = $1;"
+	stmt, _ := connectToDB.Prepare(query)
+	stmt.Exec(id)
 }

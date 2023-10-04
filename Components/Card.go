@@ -12,7 +12,8 @@ type Card struct {
 	Number         string    `json:"number"`
 	Cvv            string    `json:"cvv"`
 	ExpirationDate time.Time `json:"expirationDate"`
-	Balance        Balance   `json:"balance"`
+	Balance        float64   `json:"balance"`
+	CurrencyId     int       `json:"currency_ID"`
 	History        []History `json:"history"`
 	IsCardActive   bool      `json:"isCardActive"`
 }

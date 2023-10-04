@@ -18,16 +18,24 @@ type Card struct {
 	IsCardActive   bool      `json:"isCardActive"`
 }
 
-func (bill Bill) CreateCard() bool {
+func (bill Bill) CreateCard(currencyTag string) bool {
 	connectToDB := db.ConnectToDB()
-	query := `INSERT INTO cards (bill_id, number, cvv, expiration_date, iscardactive)
-            values ($1,$2,$3, $4, $5);`
+	fmt.Println(currencyTag)
+	currencyId := FindCurrencyIdByTag(currencyTag)
+	fmt.Println(currencyId)
+	query := `INSERT INTO cards (bill_id, number, cvv, expiration_date, iscardactive, currency_id)
+            values ($1,$2,$3, $4, $5, $6);`
 
 	stmt, _ := connectToDB.Prepare(query)
 
 	cvv, number := randomCVVAndNumber()
 
-	res, _ := stmt.Exec(bill.ID, number, cvv, time.Now().AddDate(4, 0, 0), true)
+	res, _ := stmt.Exec(bill.ID,
+		number,
+		cvv,
+		time.Now().AddDate(4, 0, 0),
+		true,
+		currencyId)
 	defer stmt.Close()
 
 	fmt.Println(res.RowsAffected())

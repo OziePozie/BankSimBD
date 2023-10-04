@@ -18,6 +18,6 @@ func main() {
 
 	fmt.Println(account.StructToJSON())
 	fmt.Println(bill)
-	bill.CreateCard()
+	bill.CreateCard("RU")
 	fmt.Println(bill.FindAllCardsByAccountId())
 }

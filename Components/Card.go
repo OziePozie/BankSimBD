@@ -13,21 +13,29 @@ type Card struct {
 	Cvv            string    `json:"cvv"`
 	ExpirationDate time.Time `json:"expirationDate"`
 	Balance        float64   `json:"balance"`
-	CurrencyId     int       `json:"currency_ID"`
+	CurrencyTag    string    `json:"CurrencyTag"`
 	History        []History `json:"history"`
 	IsCardActive   bool      `json:"isCardActive"`
 }
 
-func (bill Bill) CreateCard() bool {
+func (bill Bill) CreateCard(currencyTag string) bool {
 	connectToDB := db.ConnectToDB()
-	query := `INSERT INTO cards (bill_id, number, cvv, expiration_date, iscardactive)
-            values ($1,$2,$3, $4, $5);`
+	fmt.Println(currencyTag)
+	currencyId := FindCurrencyIdByTag(currencyTag)
+	fmt.Println(currencyId)
+	query := `INSERT INTO cards (bill_id, number, cvv, expiration_date, iscardactive, currency_id)
+            values ($1,$2,$3, $4, $5, $6);`
 
 	stmt, _ := connectToDB.Prepare(query)
 
 	cvv, number := randomCVVAndNumber()
 
-	res, _ := stmt.Exec(bill.ID, number, cvv, time.Now().AddDate(4, 0, 0), true)
+	res, _ := stmt.Exec(bill.ID,
+		number,
+		cvv,
+		time.Now().AddDate(4, 0, 0),
+		true,
+		currencyId)
 	defer stmt.Close()
 
 	fmt.Println(res.RowsAffected())
@@ -35,12 +43,12 @@ func (bill Bill) CreateCard() bool {
 
 }
 
-func (bill Bill) FindAllCardsByAccountId() []Card {
+func (bill *Bill) FindAllCardsByBillId() []Card {
 	var Cards []Card
 	var card Card
 
 	connectToDB := db.ConnectToDB()
-	query := "SELECT number, cvv, expiration_date, iscardactive FROM Cards WHERE bill_id = ($1)"
+	query := "SELECT number, cvv, expiration_date, iscardactive, currency_tag FROM Cards JOIN public.currency c on c.currency_id = Cards.currency_id WHERE bill_id = ($1)"
 	stmt, _ := connectToDB.Prepare(query)
 	rows, err := stmt.Query(bill.ID)
 	if err != nil {
@@ -50,9 +58,11 @@ func (bill Bill) FindAllCardsByAccountId() []Card {
 		rows.Scan(&card.Number,
 			&card.Cvv,
 			&card.ExpirationDate,
-			&card.IsCardActive)
+			&card.IsCardActive,
+			&card.CurrencyTag)
 		Cards = append(Cards, card)
 	}
+	bill.Cards = Cards
 	defer stmt.Close()
 	return Cards
 }

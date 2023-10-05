@@ -48,7 +48,7 @@ func randomNumberBill() string {
 
 func (account Account) FindAllBillsByAccountId() []Bill {
 	var Bills []Bill
-	var Bill Bill
+	var bill Bill
 
 	connectToDB := db.ConnectToDB()
 	query := "SELECT bill_id, number, sum_limit FROM bills WHERE account_id = ($1)"
@@ -58,11 +58,21 @@ func (account Account) FindAllBillsByAccountId() []Bill {
 		return nil
 	}
 	for rows.Next() {
-		rows.Scan(&Bill.ID,
-			&Bill.Number,
-			&Bill.Limit)
-		Bills = append(Bills, Bill)
+		rows.Scan(&bill.ID,
+			&bill.Number,
+			&bill.Limit)
+		Bills = append(Bills, bill)
 	}
+	var bills []Bill
+	for _, b := range Bills {
+		cards := b.FindAllCardsByBillId()
+		//fmt.Println(cards)
+		b.Cards = cards
+		//fmt.Println(b.Cards)
+		bills = append(bills, b)
+	}
+	account.Bill = bills
+	//fmt.Println(account.Bill)
 	defer stmt.Close()
 	return Bills
 }

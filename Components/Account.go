@@ -75,6 +75,24 @@ func FindAccountById(id int) Account {
 	defer stmt.Close()
 	return account
 }
+func FindAccountByLogin(email string) Account {
+	var account Account
+	connectToDB := db.ConnectToDB()
+	query := "SELECT * FROM accounts WHERE email = ($1)"
+	stmt, _ := connectToDB.Prepare(query)
+	rows, _ := stmt.Query(email)
+
+	for rows.Next() {
+		rows.Scan(&account.ID,
+			&account.FirstName,
+			&account.SecondName,
+			&account.Login,
+			&account.Password)
+
+	}
+	defer stmt.Close()
+	return account
+}
 
 func UpdateAccount(a Account) {
 	connectToDB := db.ConnectToDB()
@@ -136,6 +154,19 @@ func RegisterAccount(scanner *bufio.Scanner) {
 	fmt.Println("Регистрация успешно завершена!")
 }
 
+func GetAccount(email string) Account {
+	var acc Account
+	acc = FindAccountByLogin(email)
+	bills := acc.FindAllBillsByAccountId()
+	for _, bill := range bills {
+		cards := bill.FindAllCardsByBillId()
+		bill.Cards = cards
+		bills = append(bills, bill)
+	}
+	acc.Bill = bills
+	return acc
+}
+
 func (account AccountDetails) createAccount(login, password, firstName, secondName string) bool {
 
 	account.FirstName = firstName
@@ -148,4 +179,14 @@ func (account AccountDetails) createAccount(login, password, firstName, secondNa
 	CreateAccount(account)
 
 	return true
+}
+func AuthAccount(login, password string) (Account, error) {
+	account := FindAccountByLogin(login)
+	if account.Password == password {
+		return account, nil
+	} else {
+
+		panic("Неправильные креды")
+
+	}
 }

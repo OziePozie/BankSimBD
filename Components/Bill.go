@@ -63,6 +63,16 @@ func (account Account) FindAllBillsByAccountId() []Bill {
 			&bill.Limit)
 		Bills = append(Bills, bill)
 	}
+	var bills []Bill
+	for _, b := range Bills {
+		cards := b.FindAllCardsByBillId()
+		//fmt.Println(cards)
+		b.Cards = cards
+		//fmt.Println(b.Cards)
+		bills = append(bills, b)
+	}
+	account.Bill = bills
+	//fmt.Println(account.Bill)
 	defer stmt.Close()
 	return Bills
 }

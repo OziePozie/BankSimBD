@@ -13,7 +13,7 @@ type Card struct {
 	Cvv            string    `json:"cvv"`
 	ExpirationDate time.Time `json:"expirationDate"`
 	Balance        float64   `json:"balance"`
-	CurrencyId     int       `json:"currency_ID"`
+	CurrencyTag    string    `json:"CurrencyTag"`
 	History        []History `json:"history"`
 	IsCardActive   bool      `json:"isCardActive"`
 }
@@ -43,12 +43,12 @@ func (bill Bill) CreateCard(currencyTag string) bool {
 
 }
 
-func (bill Bill) FindAllCardsByAccountId() []Card {
+func (bill *Bill) FindAllCardsByBillId() []Card {
 	var Cards []Card
 	var card Card
 
 	connectToDB := db.ConnectToDB()
-	query := "SELECT number, cvv, expiration_date, iscardactive FROM Cards WHERE bill_id = ($1)"
+	query := "SELECT number, cvv, expiration_date, iscardactive, currency_tag FROM Cards JOIN public.currency c on c.currency_id = Cards.currency_id WHERE bill_id = ($1)"
 	stmt, _ := connectToDB.Prepare(query)
 	rows, err := stmt.Query(bill.ID)
 	if err != nil {
@@ -58,9 +58,11 @@ func (bill Bill) FindAllCardsByAccountId() []Card {
 		rows.Scan(&card.Number,
 			&card.Cvv,
 			&card.ExpirationDate,
-			&card.IsCardActive)
+			&card.IsCardActive,
+			&card.CurrencyTag)
 		Cards = append(Cards, card)
 	}
+	bill.Cards = Cards
 	defer stmt.Close()
 	return Cards
 }
